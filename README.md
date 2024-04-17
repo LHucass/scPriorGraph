@@ -1,4 +1,6 @@
 # scPriorGraph：Constructing Biosemantic Cell-Cell Graphs with Prior Gene Set Selection for Cell Type Identification from scRNA-seq Data
+[![DOI](https://zenodo.org/badge/727700298.svg)](https://zenodo.org/doi/10.5281/zenodo.10981088)
+
 <img src="./figure.jpg" width="900">
 
 We created a method scPriorGraph based on Python and R that uses `torch` to identify cell types in scRNA-seq data. This project is a simple implementation of scPriorGraph.
