@@ -1,0 +1,2 @@
+This folder is used to store sample query datasets.
+You can download the sample dataset from Google Drive at the following link: https://drive.google.com/drive/folders/1sFbU3Wd9Ai1vlNeJH6_QkxLwWBI0WKSS?usp=sharing
