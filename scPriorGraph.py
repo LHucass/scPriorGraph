@@ -102,17 +102,10 @@ def train(epoch):
     loss_train.backward()
     optimizer.step()
 
-    model.eval()
-    optimizer.zero_grad()
-    output_za_q, output_zp1_q, output_zp2_q, embeddings_test = model(feature_test, A1_test, P1_test, A2_test, P2_test)
-    loss_test = model_loss(output_za_q, output_zp1_q, output_zp2_q, embeddings_test, knn_test, A1_test0, labels_test, args)
-    acc_test = accuracy(output_za_q, labels_test)
-
     if epoch % 1 == 0:
         print('Epoch: {:04d}'.format(epoch + 1),
               'loss_train: {:.4f}'.format(loss_train.item()),
-              'acc_train: {:.4f}'.format(acc_train),
-              'loss_test: {:.4f}'.format(loss_test.item()))
+              'acc_train: {:.4f}'.format(acc_train))
 
 def evaluation():
     model.eval()
