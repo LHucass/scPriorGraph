@@ -75,18 +75,20 @@ The work to release the project as an installable package is currently in progre
 
 ## Usage
 ### Step 1: Prepare data
-The standard data format that the model can accept is a gene expression matrix where rows represent cells and columns represent genes. The cell label file should have cell indices that match those in the expression matrix. The reference dataset and the query dataset should have the same gene names and the same number of genes, and gene names should be in lowercase.
+The standard data format that the model can accept is a gene expression matrix where rows represent cells and columns represent genes. The cell label file should have cell indices that match those in the expression matrix. The reference dataset and the query dataset should have the same gene names and the same number of genes.
 
 ### Step 2: Training the model and Prediction
 
 ```
-python ./scPriorGraph.py --ref bh --query se --pathway KEGGHuman
+python ./scPriorGraph.py --refer_M_path ./data/ref/M_bh.csv --refer_L_path ./data/ref/L_bh.csv --query_M_path ./data/query/M_se.csv --query_L_path ./data/query/L_se.csv --pathway WikiHuman --epochs 200
 ```
 
 #### Input
-+ `ref`: The name of the dataset used for training the model.
-+ `query`: The name of the dataset used for prediction.
-+ `pathway`: The pathway selected by the user.
++ `refer_M_path`: The path of the expression matrix used for training the model.
++ `refer_L_path`: The path of the cell label used for training the model.
++ `query_M_path`: The path of the expression matrix used for prediction.
++ `query_L_path`: The path of the cell label used for prediction.
++ `pathway`: The pathway database selected by the user, such as "KEGGHuman", "KEGGMouse", "ReactomeHuman", "ReactomeMouse", "WikiHuman", "WikiMouse".
 
 #### Output
 + `pred.csv`: The predicted results for cell types in the query dataset.

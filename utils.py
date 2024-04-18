@@ -14,13 +14,16 @@ import anndata as ad
 from numpy import inf
 from scipy import sparse
 import math
+import anndata as ad
+from sklearn.metrics import accuracy_score, confusion_matrix
+
 
 def accuracy(output, labels):
-    """Get accuracy from prediction results"""
     preds = output.max(1)[1].type_as(labels)
-    correct = preds.eq(labels).double()
-    correct = correct.sum()
-    return correct / len(labels)
+
+    acc = accuracy_score(y_true=preds.cpu().numpy(), y_pred=labels.cpu().numpy())
+
+    return acc
 
 
 def encode_onehot(labels):
@@ -32,7 +35,6 @@ def encode_onehot(labels):
 
 
 def normalize(mx):
-    """Row-normalize sparse matrix"""
     rowsum = np.array(mx.sum(1))
     r_inv = np.power(rowsum, -1).flatten()
     r_inv[np.isinf(r_inv)] = 0.
@@ -42,7 +44,6 @@ def normalize(mx):
 
 
 def sparse_mx_to_torch_sparse_tensor(sparse_mx):
-    """Convert a scipy sparse matrix to a torch sparse tensor."""
     sparse_mx = sparse_mx.tocoo().astype(np.float32)
     indices = torch.from_numpy(
         np.vstack((sparse_mx.row, sparse_mx.col)).astype(np.int64))
@@ -51,8 +52,15 @@ def sparse_mx_to_torch_sparse_tensor(sparse_mx):
     return torch.sparse.FloatTensor(indices, values, shape)
 
 
+def cell_fliter(label1,threshold):
+    count_dict = label1.value_counts().to_dict()
+    keep_categories = [key for key in count_dict.keys() if count_dict[key] >= threshold]
+    keep_rows = label1.isin(keep_categories)
+    label1 = label1[keep_rows]
+    return label1
+
+
 def lower_matrix(df):
-    """Convert the index of the dataframe to lowercase"""
     index = df.index
     index = list(index)
     index2 = []
@@ -78,26 +86,66 @@ def get_adjs(adjs):
     return A1_train0, A2_train0, A1_test0, A2_test0, A1_train, A1_test, A2_train, A2_test, P1_train, P1_test, P2_train, P2_test
 
 
-def remove_exclusive(label1,threshold):
-    count_dict = label1.value_counts().to_dict()
-    keep_categories = [key for key in count_dict.keys() if count_dict[key] >= threshold]
-    keep_rows = label1.isin(keep_categories)
-    label1 = label1[keep_rows]
-    return label1
-
-
-def prepare_data(query_path_M, query_path_L, refer_path_M, refer_path_L):
+def prepare_data(args):
     """Get HVG expression information and aligned dimensionality reduction expression matrix from reference and query matrices"""
 
-    r_M = pd.read_csv('./data/processed/ref_HVG.csv', header=0, index_col=0)
-    r_L = pd.read_csv('./data/processed/ref_Label.csv', header=0, index_col=0)
-    r_M_DR = np.loadtxt('./data/processed/ref_exp.csv', delimiter=',')
+    refer_M = pd.read_csv(args.refer_M_path, header=0, index_col=0)
+    refer_L = pd.read_csv(args.refer_L_path, header=0, index_col=0)
+    query_M = pd.read_csv(args.query_M_path, header=0, index_col=0)
+    query_L = pd.read_csv(args.query_L_path, header=0, index_col=0)
 
-    q_M = pd.read_csv('./data/processed/query_HVG.csv', header=0, index_col=0)
-    q_L = pd.read_csv('./data/processed/query_Label.csv', header=0, index_col=0)
-    q_M_DR = np.loadtxt('./data/processed/query_exp.csv', delimiter=',')
+    adata_r = ad.AnnData(X=refer_M)
+    adata_r.obs["celltype"] = refer_L.iloc[:, 0]
+    sc.pp.filter_cells(adata_r, min_genes=args.min_genes)
+    sc.pp.filter_genes(adata_r, min_cells=args.min_cells)
+    sc.pp.filter_genes(adata_r, min_counts=args.min_counts)
 
-    return r_M, r_L, r_M_DR, q_M, q_L, q_M_DR
+    adata_q = ad.AnnData(X=query_M)
+    adata_q.obs["celltype"] = query_L.iloc[:, 0]
+    sc.pp.filter_cells(adata_q, min_genes=args.min_genes)
+    sc.pp.filter_genes(adata_q, min_cells=args.min_cells)
+    sc.pp.filter_genes(adata_q, min_counts=args.min_counts)
+
+    temp_Lr = adata_r.obs["celltype"]
+    temp_Lr = cell_fliter(temp_Lr, args.min_cells2)
+    common_type = set(set(temp_Lr) & set(adata_q.obs["celltype"]))
+    common_type.discard('Other/Doublet')
+    print(common_type)
+    mask_r = adata_r.obs["celltype"].isin(common_type)
+    mask_q = adata_q.obs["celltype"].isin(common_type)
+    adata_r = adata_r[mask_r, :].copy()
+    adata_q = adata_q[mask_q, :].copy()
+
+    sc.pp.normalize_total(adata_r, target_sum=1e4)
+    sc.pp.log1p(adata_r)
+    sc.pp.highly_variable_genes(adata_r, n_top_genes=args.num_hvg)
+    hvg_r = adata_r.var["highly_variable"]
+
+    sc.pp.normalize_total(adata_q, target_sum=1e4)
+    sc.pp.log1p(adata_q)
+    sc.pp.highly_variable_genes(adata_q, n_top_genes=args.num_hvg)
+    hvg_q = adata_q.var["highly_variable"]
+
+    hvg_common = list(adata_r.var_names[hvg_r].intersection(adata_q.var_names[hvg_q]))
+    adata_r = adata_r[:, adata_r.var_names.isin(hvg_common)]
+    adata_q = adata_q[:, adata_q.var_names.isin(hvg_common)]
+
+    adata_all = sc.concat([adata_r, adata_q], join='inner', label='study', keys=['refer', 'query'], index_unique=None)
+
+    sc.pp.pca(adata_all, n_comps=args.dim_reduction)
+    sc.external.pp.harmony_integrate(adata_all, key="study", verbose=False)
+    adata_r_split = adata_all[adata_all.obs["study"] == "refer", :]
+    adata_q_split = adata_all[adata_all.obs["study"] == "query", :]
+    DR_r = adata_r_split.obsm["X_pca_harmony"]
+    DR_q = adata_q_split.obsm["X_pca_harmony"]
+    HVG_r = pd.DataFrame(adata_r_split.X, index=adata_r_split.obs_names, columns=adata_r_split.var_names)
+    HVG_q = pd.DataFrame(adata_q_split.X, index=adata_q_split.obs_names, columns=adata_q_split.var_names)
+    L_r = adata_r_split.obs['celltype']
+    L_q = adata_q_split.obs['celltype']
+
+    data_list = [DR_r, DR_q, HVG_r, HVG_q, L_r, L_q]
+
+    return data_list
 
 
 def diffusion_fun_sparse(A):
@@ -263,3 +311,21 @@ def _PPMI_sparse(mat):
             if log_r > 0:
                 p[i, j] = log_r
     return p
+
+from sklearn.neighbors import kneighbors_graph
+
+
+def model_loss(output_za, output_zp1, output_zp2, embeddings_train, knn_train, A1_train0, labels_train, args):
+    loss_CE = torch.nn.CrossEntropyLoss()
+    loss_MSE = torch.nn.MSELoss()
+    embeddings_train = embeddings_train.cpu().detach().numpy()
+    re_graph_train = kneighbors_graph(embeddings_train, knn_train, mode='connectivity', include_self=True)
+    re_graph_train = normalize(re_graph_train)
+    A1_train_dense = torch.tensor(A1_train0.toarray())
+    re_graph_train = torch.tensor(re_graph_train.toarray())
+    loss_ce = loss_CE(output_za, labels_train)
+    loss_reg1 = loss_MSE(output_za, output_zp1)
+    loss_reg2 = loss_MSE(output_za, output_zp2)
+    loss_rec = loss_MSE(re_graph_train, A1_train_dense)
+    loss_train = args.weight_ce * loss_ce + args.weight_reg * (loss_reg1 + loss_reg2) + args.weight_rec * loss_rec
+    return loss_train

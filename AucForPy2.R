@@ -20,12 +20,11 @@ pathway_scoring <- function(gSet, mat_gene){
 
 AUC <- function(scPath,paPath,output_path) {
 
-  mat_gene = load_matrix(scPath) # genes*cells
-  gSet1=load_pathway(paPath) # gene set
+  mat_gene = load_matrix(scPath)
+  gSet1=load_pathway(paPath)
+  gSet1=subsetGeneSets(gSet1, rownames(mat_gene))
   print(gSet1)
-  gSet1=subsetGeneSets(gSet1, rownames(mat_gene)) # Subset the gene set to only include genes present in the expression matrix
-  print(gSet1)
-  mat_path = pathway_scoring(gSet1, mat_gene) # Scoring the gene expression matrix
+  mat_path = pathway_scoring(gSet1, mat_gene)
 
   write.csv(mat_path,file=output_path)
 }
