@@ -143,15 +143,9 @@ def data_loader(args):
     output_path1 = f"./data/temp/r_A1_{args.r_name}_{args.q_name}_{args.pathway}_{args.num_hvg}.csv"
     output_path2 = f"./data/temp/r_A2_{args.r_name}_{args.q_name}_{args.pathway2}_{args.num_hvg}.csv"
     sc_path = "./data/temp/features_graph_train.csv"
+    get_mat_path(sc_path, pa_path1, output_path1)
+    get_mat_path(sc_path, pa_path2, output_path2)
 
-    if os.path.exists(output_path1):
-        print("scroed files exist !")
-    else:
-        get_mat_path(sc_path, pa_path1, output_path1)
-    if os.path.exists(output_path2):
-        print("scroed files exist !")
-    else:
-        get_mat_path(sc_path, pa_path2, output_path2)
     features_graphA1_pathway_train = pd.read_csv(output_path1, sep=',', header=0, index_col=0)
     features_graphA2_pathway_train = pd.read_csv(output_path2, sep=',', header=0, index_col=0)
     A1_train, _ = get_snf_matrix(features_graphA1_pathway_train, features_graph_train, knn_train, args)
@@ -177,15 +171,8 @@ def data_loader(args):
     sc_path = "./data/temp/features_graph_test.csv"
     output_path3 = f"./data/temp/q_A1_{args.r_name}_{args.q_name}_{args.pathway}_{args.num_hvg}.csv"
     output_path4 = f"./data/temp/q_A2_{args.r_name}_{args.q_name}_{args.pathway2}_{args.num_hvg}.csv"
-    if os.path.exists(output_path3):
-        print("scroed files exist !")
-    else:
-        get_mat_path(sc_path, pa_path1, output_path3)
-
-    if os.path.exists(output_path4):
-        print("scroed files exist !")
-    else:
-        get_mat_path(sc_path, pa_path2, output_path4)
+    get_mat_path(sc_path, pa_path1, output_path3)
+    get_mat_path(sc_path, pa_path2, output_path4)
 
     features_graphA1_pathway_test = pd.read_csv(output_path3, sep=',', header=0, index_col=0)
     features_graphA2_pathway_test = pd.read_csv(output_path4, sep=',', header=0, index_col=0)

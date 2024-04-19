@@ -316,6 +316,9 @@ from sklearn.neighbors import kneighbors_graph
 
 
 def model_loss(output_za, output_zp1, output_zp2, embeddings_train, knn_train, A1_train0, labels_train, args):
+    args.weight_ce = 0.5
+    args.weight_reg = 0.3
+    args.weight_rec = 0.2
     loss_CE = torch.nn.CrossEntropyLoss()
     loss_MSE = torch.nn.MSELoss()
     embeddings_train = embeddings_train.cpu().detach().numpy()

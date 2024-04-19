@@ -38,9 +38,6 @@ parser.add_argument('--min_cells', type=int, default=50, help='Parameters in sca
 parser.add_argument('--min_counts', type=int, default=100, help='Parameters in scanpy.pp.filter_genes')
 parser.add_argument('--num_hvg', type=int, default=5000, help='Number of highly variable genes extracted.')
 parser.add_argument('--min_cells2', type=int, default=1, help='Cell count threshold to filter out types')
-parser.add_argument('--weight_ce', type=float, default=0.5)
-parser.add_argument('--weight_reg', type=float, default=0.3)
-parser.add_argument('--weight_rec', type=float, default=0.2)
 parser.add_argument('--layers', type=int, default=3)
 
 args = parser.parse_args()
