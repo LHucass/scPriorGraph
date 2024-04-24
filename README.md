@@ -70,8 +70,16 @@ BiocManager::install("SingleCellExperiment", version = "1.20.1")
 We recommend using PyCharm to run this method. 
 This project needs to invoke R to run the code. 
 Please make sure that you have already installed the R environment (version 4.2.2) and have installed the required R packages before running this project.   
-The work to release the project as an installable package is currently in progress.
-
+The work to release the project as an installable package is currently in progress. 
+We have uploaded the project to TestPyPI, which is a repository for testing projects before they are officially released on PyPI. 
+You can use the following command to install and run the project. 
+Warning: This is just an initial version, and improvements are still being made for a better user experience.
+```
+# install
+pip install -i https://test.pypi.org/simple/ scPriorGraph
+# run
+run_scPriorGraph --refer_M_path ./data/ref/M_bh.csv --refer_L_path ./data/ref/L_bh.csv --query_M_path ./data/query/M_se.csv --query_L_path ./data/query/L_se.csv --pathway WikiHuman --epochs 200
+```
 
 ## Usage
 ### Step 1: Prepare data
