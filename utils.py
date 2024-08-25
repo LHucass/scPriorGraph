@@ -152,9 +152,9 @@ def diffusion_fun_sparse(A):
     n, m = A.shape
     A_with_selfloop = A + sp.identity(n, format='csc')
     diags = A_with_selfloop.sum(axis=1).flatten()
-    with scipy.special.errstate(all='ignore'):
-        diags_sqrt = 1.0 / scipy.sqrt(diags)
-    diags_sqrt[scipy.isinf(diags_sqrt)] = 0
+    with np.errstate(divide='ignore'):
+        diags_sqrt = 1.0 / np.sqrt(diags)
+    diags_sqrt[np.isinf(diags_sqrt)] = 0
     DH = sp.spdiags(diags_sqrt, [0], m, n, format='csc')
     d = DH.dot(A_with_selfloop.dot(DH))
     return d
@@ -165,9 +165,9 @@ def _normalize_diffusion_matrix(A):
     A_with_selfloop = A
     diags = A_with_selfloop.sum(axis=1).flatten()
 
-    with scipy.special.errstate(all='ignore'):
-        diags_sqrt = 1.0 / scipy.sqrt(diags)
-    diags_sqrt[scipy.isinf(diags_sqrt)] = 0
+    with np.errstate(divide='ignore'):
+        diags_sqrt = 1.0 / np.sqrt(diags)
+    diags_sqrt[np.isinf(diags_sqrt)] = 0
     DH = sp.spdiags(diags_sqrt, [0], m, n, format='csc')
     d = DH.dot(A_with_selfloop.dot(DH))
     return d
